@@ -1,6 +1,6 @@
 package version
 
-const value = "dev"
+const value = "0.1.0"
 
 func String() string {
 	return value
