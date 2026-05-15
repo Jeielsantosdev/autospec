@@ -85,10 +85,10 @@ func TestAutospecGeneratesOpenAPISpecForBasicRoutes(t *testing.T) {
 		t.Fatalf("spec missing POST operation for /users")
 	}
 
-	// Checks: GET/PUT/DELETE for /users/:id exist
-	p2, ok := spec.Paths["/users/:id"]
+	// Checks: GET/PUT/DELETE for /users/{id} exist
+	p2, ok := spec.Paths["/users/{id}"]
 	if !ok {
-		t.Fatalf("spec missing path: /users/:id")
+		t.Fatalf("spec missing path: /users/{id}")
 	}
 	if p2.Get == nil {
 		t.Fatalf("spec missing GET operation for /users/:id")
@@ -98,5 +98,20 @@ func TestAutospecGeneratesOpenAPISpecForBasicRoutes(t *testing.T) {
 	}
 	if p2.Delete == nil {
 		t.Fatalf("spec missing DELETE operation for /users/:id")
+	}
+
+	if p2.Get == nil || len(p2.Get.Parameters) != 1 {
+		t.Fatalf("expected one path parameter on /users/{id}, got %+v", p2.Get)
+	}
+	param := p2.Get.Parameters[0]
+	if param.Name != "id" || param.In != "path" || !param.Required || param.Schema.Type != "string" {
+		t.Fatalf("unexpected path parameter: %+v", param)
+	}
+
+	if p2.Get.Summary == "" {
+		t.Fatalf("expected a generated summary for /users/{id}")
+	}
+	if p2.Get.Description != "Route discovered at runtime" {
+		t.Fatalf("unexpected description for /users/{id}: %q", p2.Get.Description)
 	}
 }

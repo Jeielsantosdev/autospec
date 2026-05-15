@@ -2,7 +2,6 @@ package ginadapter
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -40,14 +39,18 @@ func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
 		status := c.Writer.Status()
 		path := c.FullPath()
 		method := c.Request.Method
+		handlerName := c.HandlerName()
 
 		if path != "" {
+			spec.AddOperation(path, method, openapi.Operation{
+				Summary:     handlerName,
+				Description: "Route discovered at runtime",
+				Tags:        []string{},
+			})
 			example := map[string]any{"request": string(reqbuf), "response": bw.body.String()}
 			schema := openapi.Schema{Type: "object", Example: example}
 			spec.AddJSONResponse(path, method, http.StatusText(status),
 				"captured example", schema)
-			// debug: print new operation state for this path
-			fmt.Printf("[autospec] captured path=%s method=%s -> spec.Paths: %+v\n", path, method, spec.Paths)
 		}
 	}
 

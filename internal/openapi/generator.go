@@ -1,5 +1,7 @@
 package openapi
 
+import "strings"
+
 func NewSpec(title string, version string, description string) *Spec {
 	return &Spec{
 		OpenAPI: "3.1.0",
@@ -32,7 +34,10 @@ func (s *Spec) AddSecurityScheme(name string, scheme SecurityScheme) {
 }
 
 func (s *Spec) AddOperation(path string, method string, operation Operation) {
-	item := s.Paths[path]
+	normalizedPath := normalizePath(path)
+	item := s.Paths[normalizedPath]
+	operation = normalizeOperation(operation)
+	operation.Parameters = mergePathParameters(operation.Parameters, extractPathParameters(normalizedPath))
 
 	switch method {
 	case "GET":
@@ -53,11 +58,12 @@ func (s *Spec) AddOperation(path string, method string, operation Operation) {
 		item.Trace = &operation
 	}
 
-	s.Paths[path] = item
+	s.Paths[normalizedPath] = item
 }
 
 func (s *Spec) AddJSONResponse(path string, method string, status string, description string, schema Schema) {
-	item := s.Paths[path]
+	normalizedPath := normalizePath(path)
+	item := s.Paths[normalizedPath]
 
 	operation := operationForMethod(&item, method)
 	if operation == nil {
@@ -67,6 +73,9 @@ func (s *Spec) AddJSONResponse(path string, method string, status string, descri
 	if operation.Responses == nil {
 		operation.Responses = make(map[string]Response)
 	}
+
+	operation.Parameters = mergePathParameters(operation.Parameters, extractPathParameters(normalizedPath))
+	operation.Summary = normalizeSummary(operation.Summary)
 
 	operation.Responses[status] = Response{
 		Description: description,
@@ -96,7 +105,7 @@ func (s *Spec) AddJSONResponse(path string, method string, status string, descri
 		item.Trace = operation
 	}
 
-	s.Paths[path] = item
+	s.Paths[normalizedPath] = item
 }
 
 func operationForMethod(item *PathItem, method string) *Operation {
@@ -120,4 +129,18 @@ func operationForMethod(item *PathItem, method string) *Operation {
 	default:
 		return nil
 	}
+}
+
+func normalizeOperation(operation Operation) Operation {
+	operation.Summary = normalizeSummary(operation.Summary)
+	return operation
+}
+
+func normalizeSummary(summary string) string {
+	summary = strings.TrimSpace(summary)
+	if summary == "" || !looksLikeHandlerName(summary) {
+		return summary
+	}
+
+	return formatOperationName(summary)
 }

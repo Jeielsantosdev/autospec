@@ -1,8 +1,6 @@
 package ginadapter
 
 import (
-	"fmt"
-
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
 	"github.com/Jeielsantosdev/autospec/internal/runtime"
 	"github.com/gin-gonic/gin"
@@ -26,7 +24,6 @@ func (a *Adapter) Attach() {
 	}
 
 	snapshot := runtime.Inspect()
-	fmt.Printf("[autospec] runtime snapshot routes: %+v\n", snapshot.Routes)
 	for _, route := range snapshot.Routes {
 		a.Spec.AddOperation(route.Path, route.Method, openapi.Operation{
 			Summary: route.Handler,

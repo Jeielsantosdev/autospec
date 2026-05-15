@@ -1,7 +1,6 @@
 package ginadapter
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Jeielsantosdev/autospec/internal/generators"
@@ -19,8 +18,6 @@ func Attach(app any, spec *openapi.Spec) error {
 	if !ok {
 		return nil
 	}
-	// debug: print current registered routes when attaching
-	fmt.Println("[autospec] engine.Routes():", engine.Routes())
 
 	// seed spec from engine routes (if any routes already registered)
 	for _, r := range engine.Routes() {
@@ -30,8 +27,6 @@ func Attach(app any, spec *openapi.Spec) error {
 	}
 
 	engine.GET("/openapi.json", func(c *gin.Context) {
-		// debug: print spec paths before serializing
-		fmt.Printf("[autospec] spec.Paths: %+v\n", spec.Paths)
 		payload, err := spec.JSON()
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
