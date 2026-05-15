@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"path"
 	"regexp"
 	"strings"
@@ -156,4 +157,43 @@ func titleWord(word string) string {
 
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+func InferJSONSchemaFromBytes(data []byte) Schema {
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "" {
+		return Schema{Type: "object"}
+	}
+
+	if strings.HasPrefix(trimmed, "{") {
+		var payload map[string]any
+		if err := json.Unmarshal([]byte(trimmed), &payload); err == nil {
+			return Schema{Type: "object", Example: payload}
+		}
+		return Schema{Type: "object", Example: trimmed}
+	}
+
+	if strings.HasPrefix(trimmed, "[") {
+		var payload []any
+		if err := json.Unmarshal([]byte(trimmed), &payload); err == nil {
+			return Schema{Type: "array", Example: payload}
+		}
+		return Schema{Type: "array", Example: trimmed}
+	}
+
+	var primitive any
+	if err := json.Unmarshal([]byte(trimmed), &primitive); err == nil {
+		switch primitive.(type) {
+		case string:
+			return Schema{Type: "string", Example: primitive}
+		case bool:
+			return Schema{Type: "boolean", Example: primitive}
+		case float64:
+			return Schema{Type: "number", Example: primitive}
+		default:
+			return Schema{Type: "object", Example: primitive}
+		}
+	}
+
+	return Schema{Type: "string", Example: trimmed}
 }

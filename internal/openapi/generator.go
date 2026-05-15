@@ -108,6 +108,48 @@ func (s *Spec) AddJSONResponse(path string, method string, status string, descri
 	s.Paths[normalizedPath] = item
 }
 
+func (s *Spec) AddJSONRequestBody(path string, method string, required bool, schema Schema) {
+	normalizedPath := normalizePath(path)
+	item := s.Paths[normalizedPath]
+
+	operation := operationForMethod(&item, method)
+	if operation == nil {
+		operation = &Operation{Responses: make(map[string]Response)}
+	}
+
+	operation.Parameters = mergePathParameters(operation.Parameters, extractPathParameters(normalizedPath))
+	operation.Summary = normalizeSummary(operation.Summary)
+	operation.RequestBody = &RequestBody{
+		Required: required,
+		Content: map[string]MediaType{
+			"application/json": {
+				Schema: schema,
+			},
+		},
+	}
+
+	switch method {
+	case "GET":
+		item.Get = operation
+	case "POST":
+		item.Post = operation
+	case "PUT":
+		item.Put = operation
+	case "PATCH":
+		item.Patch = operation
+	case "DELETE":
+		item.Delete = operation
+	case "OPTIONS":
+		item.Options = operation
+	case "HEAD":
+		item.Head = operation
+	case "TRACE":
+		item.Trace = operation
+	}
+
+	s.Paths[normalizedPath] = item
+}
+
 func operationForMethod(item *PathItem, method string) *Operation {
 	switch method {
 	case "GET":

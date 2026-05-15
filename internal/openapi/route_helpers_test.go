@@ -1,6 +1,9 @@
 package openapi
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestNormalizePath(t *testing.T) {
 	t.Parallel()
@@ -112,5 +115,48 @@ func TestAddJSONResponseAddsPathParameters(t *testing.T) {
 	param := item.Get.Parameters[0]
 	if param.Name != "id" || param.In != "path" || !param.Required || param.Schema.Type != "string" {
 		t.Fatalf("unexpected parameter: %+v", param)
+	}
+}
+
+func TestAddJSONRequestBodyAddsPayload(t *testing.T) {
+	t.Parallel()
+
+	spec := NewSpec("test", "1.0.0", "")
+	spec.AddJSONRequestBody("/users", "POST", true, Schema{Type: "object", Example: map[string]any{"name": "john"}})
+
+	item, ok := spec.Paths["/users"]
+	if !ok {
+		t.Fatalf("path not found in spec paths: %+v", spec.Paths)
+	}
+
+	if item.Post == nil {
+		t.Fatalf("expected POST operation on /users")
+	}
+	if item.Post.RequestBody == nil {
+		t.Fatalf("expected request body on POST /users")
+	}
+	if !item.Post.RequestBody.Required {
+		t.Fatalf("expected request body to be required")
+	}
+	content := item.Post.RequestBody.Content["application/json"]
+	if content.Schema.Type != "object" {
+		t.Fatalf("unexpected request body schema: %+v", content.Schema)
+	}
+}
+
+func TestInferJSONSchemaFromBytes(t *testing.T) {
+	t.Parallel()
+
+	schema := InferJSONSchemaFromBytes([]byte(`{"name":"john","age":30}`))
+	if schema.Type != "object" {
+		t.Fatalf("expected object schema, got %q", schema.Type)
+	}
+
+	encoded, err := json.Marshal(schema.Example)
+	if err != nil {
+		t.Fatalf("failed to marshal example: %v", err)
+	}
+	if string(encoded) != `{"age":30,"name":"john"}` && string(encoded) != `{"name":"john","age":30}` {
+		t.Fatalf("unexpected example payload: %s", string(encoded))
 	}
 }

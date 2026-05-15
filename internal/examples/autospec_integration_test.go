@@ -84,6 +84,9 @@ func TestAutospecGeneratesOpenAPISpecForBasicRoutes(t *testing.T) {
 	if p1.Post == nil {
 		t.Fatalf("spec missing POST operation for /users")
 	}
+	if p1.Post.RequestBody == nil || !p1.Post.RequestBody.Required {
+		t.Fatalf("spec missing required request body for POST /users")
+	}
 
 	// Checks: GET/PUT/DELETE for /users/{id} exist
 	p2, ok := spec.Paths["/users/{id}"]

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,11 @@ func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
 				Description: "Route discovered at runtime",
 				Tags:        []string{},
 			})
+			contentType := strings.ToLower(c.GetHeader("Content-Type"))
+			if len(reqbuf) > 0 && strings.Contains(contentType, "application/json") {
+				schema := openapi.InferJSONSchemaFromBytes(reqbuf)
+				spec.AddJSONRequestBody(path, method, true, schema)
+			}
 			example := map[string]any{"request": string(reqbuf), "response": bw.body.String()}
 			schema := openapi.Schema{Type: "object", Example: example}
 			spec.AddJSONResponse(path, method, http.StatusText(status),
