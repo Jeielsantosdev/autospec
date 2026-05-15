@@ -1,0 +1,452 @@
+# autospec
+
+> FastAPI-like automatic OpenAPI generation for Go.
+
+`autospec` é um SDK inteligente para geração automática de documentação OpenAPI/Swagger no ecossistema Go.
+
+A proposta é simples:
+
+* sem annotations
+* sem comentários Swagger
+* sem boilerplate
+* sem duplicação de documentação
+
+O código da aplicação se torna a única fonte de verdade.
+
+---
+
+# O Problema
+
+Hoje documentar APIs em Go ainda é uma experiência extremamente manual.
+
+Ferramentas tradicionais como:
+
+* [Swaggo](https://github.com/swaggo/swag?utm_source=chatgpt.com)
+* [Go Swagger](https://goswagger.io?utm_source=chatgpt.com)
+
+dependem fortemente de comentários e annotations:
+
+```go
+// @Summary Criar usuário
+// @Description Cria um usuário
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body CreateUserRequest true "Request"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /users [post]
+func CreateUser(c *gin.Context) {
+}
+```
+
+Isso gera vários problemas:
+
+* documentação duplicada
+* Swagger desatualizado
+* muito boilerplate
+* perda de produtividade
+* manutenção difícil
+* experiência ruim para desenvolvedores
+
+---
+
+# O Que o autospec Resolve
+
+O `autospec` traz uma experiência parecida com o FastAPI para o ecossistema Go.
+
+Exemplo no FastAPI:
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class CreateUserRequest(BaseModel):
+    name: str
+    email: str
+
+@app.post("/users")
+def create_user(data: CreateUserRequest):
+    return {
+        "success": True
+    }
+```
+
+Automaticamente o framework gera:
+
+* OpenAPI
+* Swagger UI
+* request schemas
+* response schemas
+* validação
+* exemplos
+* documentação interativa
+
+Sem comentários manuais.
+
+---
+
+# O Objetivo
+
+Trazer essa mesma experiência para Go:
+
+```go
+app.POST("/users", CreateUser)
+```
+
+E automaticamente gerar:
+
+* OpenAPI
+* Swagger UI
+* request schemas
+* response schemas
+* validações
+* autenticação
+* exemplos automáticos
+
+---
+
+# Filosofia
+
+## Code First
+
+O código é a única fonte de verdade.
+
+---
+
+## Zero Config
+
+Nenhuma annotation obrigatória.
+
+---
+
+## Automatic Introspection
+
+O SDK entende a aplicação automaticamente.
+
+---
+
+## Plug and Play
+
+Funciona em frameworks existentes.
+
+Sem obrigar migração.
+
+---
+
+# Como Funciona
+
+O `autospec` combina:
+
+| Tecnologia         | Função                 |
+| ------------------ | ---------------------- |
+| AST Parsing        | entender código        |
+| Reflection         | inferir tipos          |
+| Runtime Inspection | detectar execução real |
+
+---
+
+# AST Parsing
+
+Usando:
+
+```go
+go/ast
+go/parser
+go/token
+go/types
+```
+
+O SDK consegue analisar:
+
+* handlers
+* structs
+* rotas
+* requests
+* responses
+
+---
+
+# Runtime Inspection
+
+O diferencial principal.
+
+O runtime inspection permite detectar:
+
+* middlewares
+* grupos de rotas
+* autenticação
+* metadata real
+* rotas dinâmicas
+
+---
+
+# Exemplo
+
+## Código da aplicação
+
+```go
+app := gin.Default()
+
+autospec.Attach(app)
+
+app.POST("/users", CreateUser)
+```
+
+---
+
+## Resultado automático
+
+```yaml
+/users:
+  post:
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateUserRequest'
+
+    responses:
+      '200':
+        description: Success
+```
+
+Sem comentários Swagger.
+
+Sem annotations.
+
+Sem boilerplate.
+
+---
+
+# Compatibilidade
+
+## Inicialmente
+
+* Gin
+
+---
+
+## Futuramente
+
+* Fiber
+* Echo
+* Chi
+* net/http
+
+---
+
+# Arquitetura
+
+```txt
+autospec/
+ ├── core/
+ ├── adapters/
+ ├── runtime/
+ ├── generators/
+ ├── plugins/
+ └── cmd/
+```
+
+---
+
+# Core
+
+Responsável por:
+
+* AST parsing
+* reflection
+* schemas
+* OpenAPI generation
+
+---
+
+# Adapters
+
+Integração com frameworks.
+
+Exemplo:
+
+```txt
+adapters/gin
+adapters/fiber
+adapters/echo
+```
+
+---
+
+# Runtime
+
+Responsável por:
+
+* middleware detection
+* auth detection
+* route groups
+* runtime metadata
+
+---
+
+# Plugins
+
+Sistema extensível para:
+
+* validação
+* JWT
+* OAuth
+* examples
+* observabilidade
+
+---
+
+# Exemplo de Middleware Detection
+
+```go
+admin := app.Group("/admin", AuthMiddleware())
+```
+
+Automaticamente:
+
+```yaml
+security:
+  - bearerAuth: []
+```
+
+---
+
+# Hot Reload
+
+```bash
+autospec watch
+```
+
+Atualiza automaticamente:
+
+* OpenAPI
+* Swagger UI
+* exemplos
+* schemas
+
+---
+
+# Swagger UI Integrado
+
+```bash
+autospec dev
+```
+
+Abrindo:
+
+```txt
+localhost:8080/docs
+```
+
+---
+
+# Roadmap
+
+# Fase 1
+
+* suporte ao Gin
+* request/response detection
+* OpenAPI básico
+
+---
+
+# Fase 2
+
+* reflection avançado
+* inferência melhor
+
+---
+
+# Fase 3
+
+* runtime inspection
+* auth detection
+* middleware detection
+
+---
+
+# Fase 4
+
+* hot reload
+* docs live
+
+---
+
+# Fase 5
+
+* VSCode extension
+* geração de SDKs
+* API diff
+* CI/CD integration
+
+---
+
+# Diferencial
+
+Hoje existem soluções como:
+
+* [Swaggo](https://github.com/swaggo/swag?utm_source=chatgpt.com)
+* [Huma](https://huma.rocks?utm_source=chatgpt.com)
+* [Fuego](https://github.com/go-fuego/fuego?utm_source=chatgpt.com)
+
+Mas ainda existe espaço para uma solução que seja:
+
+* zero-config
+* plugável
+* compatível com projetos existentes
+* sem trocar framework
+* sem annotations
+
+---
+
+# O Grande Objetivo
+
+Trazer para o Go uma experiência moderna de DX semelhante ao FastAPI:
+
+> “Automatic API specs for existing Go applications.”
+
+---
+
+# Visão de Futuro
+
+O `autospec` pode evoluir para:
+
+* plataforma DevTools
+* SaaS
+* portal de APIs
+* geração automática de SDKs
+* versionamento de contratos
+* changelog automático
+* integração CI/CD
+
+---
+
+# Possíveis Nomes
+
+* autospec
+* introspec
+* specgo
+* zerodoc
+* flowapi
+* spector
+* autapi
+
+---
+
+# Conclusão
+
+O `autospec` resolve uma dor real do ecossistema Go:
+
+## documentação automática sem boilerplate
+
+Combinando:
+
+* AST
+* reflection
+* runtime inspection
+
+O projeto pode entregar uma experiência moderna de documentação automática para APIs Go, reduzindo drasticamente a necessidade de documentação manual e aproximando o ecossistema Go da DX oferecida pelo FastAPI.

@@ -1,0 +1,27 @@
+# Go build outputs
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+
+# Dependency directories
+/vendor/
+
+# Binaries
+/bin/
+/pkg/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Environment
+.env
+
+# Go modules (optional)
+# Exclude go.sum if you don't want to commit module checksums
+# go.sum
