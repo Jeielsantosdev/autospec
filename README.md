@@ -1,105 +1,107 @@
-# SDK Go — Autospec
+# Autospec SDK (Go)
 
-Projeto em Go para geração/inspeção de especificações OpenAPI e utilitários relacionados.
+Autospec é um SDK para geração automática de OpenAPI em aplicações Go, com foco em excelente Developer Experience (DX). O objetivo é permitir "plug-and-play" em projetos existentes sem exigir anotações manuais.
 
-**Requisitos**
+Requisitos
+- Go 1.18+
 
-- Go instalado (1.18+)
-
-**Instalação**
-
+Instalação
 1. Clone o repositório.
-2. No diretório do projeto, baixe dependências (Go modules):
+2. Baixe dependências:
 
 ```bash
 go mod download
 ```
 
-**Uso**
+Como usar (nova API)
 
-- Compilar tudo:
-
-```bash
-go build ./...
-```
-
-- Rodar o binário principal (exemplo de desenvolvimento):
-
-```bash
-go run ./cmd/autospec
-```
-
-- Executar testes:
-
-```bash
-go test ./...
-```
-
-**Estrutura principal**
-
-- `cmd/autospec` — ponto de entrada da aplicação
-- `internal/adapters/gin` — adaptador HTTP e rotas
-- `internal/autospec` — lógica da aplicação
-- `internal/openapi` — geradores e utilitários OpenAPI
-- `internal/generators` — geradores auxiliares (ex.: Swagger UI)
-
-**Notas rápidas**
-
-- Ajuste variáveis de ambiente criando um `.env` na raiz se necessário.
-- O projeto já contém geradores e comandos de desenvolvimento em `internal/commands`.
-
-Se quiser, eu posso:
-
-- Adicionar instruções de configuração mais detalhadas;
-- Incluir exemplos de uso das APIs;
-- Publicar no Git remoto (`git push`).
-
-**Exemplo de Uso com Gin Gonic**
-
-Um exemplo mínimo que inicializa um `gin` server, registra rotas, gera a especificação OpenAPI em runtime usando o adaptador do projeto e expõe as rotas de documentação (`/openapi.json` e `/docs`):
+Exemplo mínimo — Zero-config (Gin):
 
 ```go
 package main
 
 import (
-	"net/http"
-
-	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
-	"github.com/Jeielsantosdev/autospec/internal/openapi"
 	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
 )
 
 func main() {
-	engine := gin.Default()
+	r := gin.Default()
+	as := autospec.New()    // cria Spec e infra mínima
+	_ = as.AttachTo(r)      // autodetecta Gin, registra /openapi.json e /docs e instala capture middleware
 
-	// Cria a Spec OpenAPI
-	spec := openapi.NewSpec("Minha API", "v0.1.0", "Exemplo com Gin Gonic e autospec")
-	spec.AddServer("http://localhost:8080", "Servidor local")
+	r.POST("/users", CreateUser)
+	r.PUT("/users/:id", UpdateUser)
+	r.DELETE("/users/:id", DeleteUser)
+	r.GET("/users/:id", GetUser)
 
-	// Registre suas rotas normalmente
-	engine.GET("/hello", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Olá, mundo"})
-	})
-
-	// Anexa o adaptador que varre as rotas em runtime e popula a Spec
-	ginadapter.New(engine, spec).Attach()
-
-	// Rotas para expor a documentação gerada
-	ginadapter.RegisterDocsRoutes(engine, spec)
-
-	// Inicia o servidor
-	engine.Run(":8080")
+	r.Run(":8080")
 }
 ```
 
-Comandos úteis:
+Declarative (opcional):
 
-```bash
-# Baixar dependências
-go mod download
-
-# Rodar o exemplo (a partir da raiz do repositório)
-go run ./cmd/autospec  # ou crie um main a partir do snippet e execute: go run ./path/to/main.go
+```go
+as.Handle(r, "POST", "/users", CreateUser, autospec.Meta{
+	Input:  autospec.TypeOf[CreateUserRequest](),
+	Output: autospec.TypeOf[User](),
+})
 ```
 
-Esse exemplo usa as funções internas do projeto (`internal/adapters/gin` e `internal/openapi`). Ajuste os imports/paths conforme necessário se for extrair a parte de geração para outro módulo.
+Helpers (opcionais):
+
+```go
+func CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	autospec.BindJSON(c, &req)          // registra tipo/amostra para melhor inferência
+	user := doCreate(req)
+	autospec.RespondJSON(c, 201, user)  // registra amostra de resposta
+}
+```
+
+Rotas expostas automaticamente
+- `/openapi.json` — JSON gerado da spec
+- `/docs` — Swagger UI apontando para `/openapi.json`
+
+Testes de integração
+
+Um teste de integração de exemplo foi criado em `internal/examples/autospec_integration_test.go`. Para rodar somente esse teste:
+
+```bash
+go test ./internal/examples -run TestAutospecGeneratesOpenAPISpecForBasicRoutes
+```
+
+Comandos úteis
+
+```bash
+# Build
+go build ./...
+
+# Run tests
+go test ./...
+```
+
+Estrutura principal
+
+- `cmd/autospec` — CLI / ponto de entrada
+- `internal/autospec` — core público (API: `New`, `AttachTo`, `Handle`)
+- `internal/adapters/ginadapter` — adaptador Gin com middleware de captura
+- `internal/openapi` — modelos e geração de spec
+- `internal/generators` — Swagger UI page
+
+Notas e recomendações
+- A inferência via amostragem é heurística: oferecemos API declarativa (Meta) para precisão quando necessário.
+- Por padrão, amostras são limitadas e campos sensíveis devem ser mascarados; implemente masking antes de usar em produção.
+- Para ambientes sem overhead em runtime, utilize análise estática futura (go/packages) para gerar spec em build-time.
+
+Próximos passos sugeridos
+- Implementar `internal/reflect/schema_builder.go` para conversão `reflect.Type -> OpenAPI schema`.
+- Melhorar o inspector para merge de amostras e detecção de autenticação.
+- Adicionar adapters para Fiber, Echo, Chi e `net/http`.
+
+Contribuições
+- Abra PRs com pequenas mudanças; testes e exemplos são bem-vindos.
+
+----
+
+Se quiser, eu atualizo o README com comandos de CI ou adiciono um exemplo runnable em `examples/`.
