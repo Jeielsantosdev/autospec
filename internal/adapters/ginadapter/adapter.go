@@ -1,4 +1,4 @@
-package gin
+package ginadapter
 
 import (
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
