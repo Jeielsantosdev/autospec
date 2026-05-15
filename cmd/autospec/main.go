@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	app := autospec.New()
+	app := autospec.News()
 
 	if err := app.Run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
