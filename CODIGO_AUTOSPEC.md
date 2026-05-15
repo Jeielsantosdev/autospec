@@ -1,44 +1,175 @@
-# autospec - entrega completa do MVP
+Vou atualizar este documento com código e instruções copiáveis: core, adapter Gin, middleware de captura, exemplos e estrutura.
 
-Este arquivo reúne tudo o que iremos criar na primeira entrega completa do `autospec`.
+------
 
-Objetivo desta versão:
+# autospec — implementação pronta para copiar
 
-- base CLI funcional
-- configuração central
-- geração inicial de OpenAPI
-- integração inicial com Gin
-- exposição de Swagger UI
-- estrutura pronta para expansão
+Este arquivo contém uma proposta DX-first e implementações mínimas copiáveis para acelerar a integração do `autospec` em apps Go com Gin. Copie os blocos de código para os arquivos correspondentes.
 
-## Ordem sugerida de criação
+Objetivo: plug-and-play, não invasivo, zero-config por padrão, com opção declarativa para precisão.
 
-1. `go.mod`
-2. `cmd/autospec/main.go`
-3. `internal/version/version.go`
-4. `internal/config/config.go`
-5. `internal/openapi/spec.go`
-6. `internal/openapi/generator.go`
-7. `internal/openapi/json.go`
-8. `internal/runtime/inspect.go`
-9. `internal/adapters/gin/adapter.go`
-10. `internal/adapters/gin/routes.go`
-11. `internal/generators/swaggerui.go`
-12. `internal/commands/dev.go`
-13. `internal/commands/watch.go`
-14. `internal/autospec/app.go`
+------
 
-## Arquivo: go.mod
+## Estrutura de pastas recomendada
+
+- cmd/autospec/main.go
+- internal/autospec/           # core público (API simples: New, Attach)
+	- autospec.go
+	- options.go
+	- plugin.go
+- internal/adapters/gin/
+	- attach.go
+	- capture_middleware.go
+- internal/openapi/
+	- spec.go        (já presente — use o seu)
+	- generator.go
+- internal/inspector/
+	- inspector.go
+- internal/reflect/
+	- schema_builder.go
+- internal/generators/
+	- swaggerui.go   (já presente — use o seu)
+
+------
+
+## API pública — exemplos copy/paste
+
+Zero-config (apenas inclua e anexe):
 
 ```go
-module github.com/Jeielsantosdev/autospec
+package main
 
-go 1.26.3
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
 
-require github.com/gin-gonic/gin v1.10.0
+func main() {
+	r := gin.Default()
+	as := autospec.New() // cria spec e sistema de plugins internamente
+	as.AttachTo(r)       // autodetecta Gin e registra /docs + /openapi.json
+
+	r.GET("/hello", func(c *gin.Context){ c.JSON(200, gin.H{"msg":"ok"}) })
+	r.POST("/users", CreateUser)
+
+	r.Run(":8080")
+}
 ```
 
-## Arquivo: cmd/autospec/main.go
+Declarative (opcional — para precisão):
+
+```go
+as.Handle(r, "POST", "/users", CreateUser, autospec.Meta{
+	Input:  autospec.TypeOf[CreateUserRequest](),
+	Output: autospec.TypeOf[User](),
+})
+```
+
+Helpers (opcionais, para permitir inferência precisa dentro do handler):
+
+```go
+func CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	autospec.BindJSON(c, &req) // grava tipo/amostra
+	user := doCreate(req)
+	autospec.RespondJSON(c, 201, user) // grava amostra de resposta
+}
+```
+
+------
+
+## Implementações copiáveis (arquivos essenciais)
+
+Coloque os arquivos a seguir exatamente nos caminhos indicados.
+
+### File: cmd/autospec/main.go
+
+```go
+package mainVou atualizar este documento com código e instruções copiáveis: core, adapter Gin, middleware de captura, exemplos e estrutura.
+
+------
+
+# autospec — implementação pronta para copiar
+
+Este arquivo contém uma proposta DX-first e implementações mínimas copiáveis para acelerar a integração do `autospec` em apps Go com Gin. Copie os blocos de código para os arquivos correspondentes.
+
+Objetivo: plug-and-play, não invasivo, zero-config por padrão, com opção declarativa para precisão.
+
+------
+
+## Estrutura de pastas recomendada
+
+- cmd/autospec/main.go
+- internal/autospec/           # core público (API simples: New, Attach)
+	- autospec.go
+	- options.go
+	- plugin.go
+- internal/adapters/gin/
+	- attach.go
+	- capture_middleware.go
+- internal/openapi/
+	- spec.go        (já presente — use o seu)
+	- generator.go
+- internal/inspector/
+	- inspector.go
+- internal/reflect/
+	- schema_builder.go
+- internal/generators/
+	- swaggerui.go   (já presente — use o seu)
+
+------
+
+## API pública — exemplos copy/paste
+
+Zero-config (apenas inclua e anexe):
+
+```go
+package main
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
+
+func main() {
+	r := gin.Default()
+	as := autospec.New() // cria spec e sistema de plugins internamente
+	as.AttachTo(r)       // autodetecta Gin e registra /docs + /openapi.json
+
+	r.GET("/hello", func(c *gin.Context){ c.JSON(200, gin.H{"msg":"ok"}) })
+	r.POST("/users", CreateUser)
+
+	r.Run(":8080")
+}
+```
+
+Declarative (opcional — para precisão):
+
+```go
+as.Handle(r, "POST", "/users", CreateUser, autospec.Meta{
+	Input:  autospec.TypeOf[CreateUserRequest](),
+	Output: autospec.TypeOf[User](),
+})
+```
+
+Helpers (opcionais, para permitir inferência precisa dentro do handler):
+
+```go
+func CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	autospec.BindJSON(c, &req) // grava tipo/amostra
+	user := doCreate(req)
+	autospec.RespondJSON(c, 201, user) // grava amostra de resposta
+}
+```
+
+------
+
+## Implementações copiáveis (arquivos essenciais)
+
+Coloque os arquivos a seguir exatamente nos caminhos indicados.
+
+### File: cmd/autospec/main.go
 
 ```go
 package main
@@ -52,7 +183,104 @@ import (
 
 func main() {
 	app := autospec.New()
+	if err := app.RVou atualizar este documento com código e instruções copiáveis: core, adapter Gin, middleware de captura, exemplos e estrutura.
 
+------
+
+# autospec — implementação pronta para copiar
+
+Este arquivo contém uma proposta DX-first e implementações mínimas copiáveis para acelerar a integração do `autospec` em apps Go com Gin. Copie os blocos de código para os arquivos correspondentes.
+
+Objetivo: plug-and-play, não invasivo, zero-config por padrão, com opção declarativa para precisão.
+
+------
+
+## Estrutura de pastas recomendada
+
+- cmd/autospec/main.go
+- internal/autospec/           # core público (API simples: New, Attach)
+	- autospec.go
+	- options.go
+	- plugin.go
+- internal/adapters/gin/
+	- attach.go
+	- capture_middleware.go
+- internal/openapi/
+	- spec.go        (já presente — use o seu)
+	- generator.go
+- internal/inspector/
+	- inspector.go
+- internal/reflect/
+	- schema_builder.go
+- internal/generators/
+	- swaggerui.go   (já presente — use o seu)
+
+------
+
+## API pública — exemplos copy/paste
+
+Zero-config (apenas inclua e anexe):
+
+```go
+package main
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
+
+func main() {
+	r := gin.Default()
+	as := autospec.New() // cria spec e sistema de plugins internamente
+	as.AttachTo(r)       // autodetecta Gin e registra /docs + /openapi.json
+
+	r.GET("/hello", func(c *gin.Context){ c.JSON(200, gin.H{"msg":"ok"}) })
+	r.POST("/users", CreateUser)
+
+	r.Run(":8080")
+}
+```
+
+Declarative (opcional — para precisão):
+
+```go
+as.Handle(r, "POST", "/users", CreateUser, autospec.Meta{
+	Input:  autospec.TypeOf[CreateUserRequest](),
+	Output: autospec.TypeOf[User](),
+})
+```
+
+Helpers (opcionais, para permitir inferência precisa dentro do handler):
+
+```go
+func CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	autospec.BindJSON(c, &req) // grava tipo/amostra
+	user := doCreate(req)
+	autospec.RespondJSON(c, 201, user) // grava amostra de resposta
+}
+```
+
+------
+
+## Implementações copiáveis (arquivos essenciais)
+
+Coloque os arquivos a seguir exatamente nos caminhos indicados.
+
+### File: cmd/autospec/main.go
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
+
+func main() {
+	app := autospec.New()
 	if err := app.Run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -60,360 +288,130 @@ func main() {
 }
 ```
 
-## Arquivo: internal/version/version.go
+### File: internal/autospec/options.go
 
 ```go
-package version
+package autospec
 
-const value = "dev"
+type Option func(*Autospec)
 
-func String() string {
-	return value
+func WithPlugin(p Plugin) Option {
+	return func(a *Autospec) { a.plugins = append(a.plugins, p) }
+}
+
+func WithAdapterName(name string) Option {
+	return func(a *Autospec) { a.preferredAdapter = name }
 }
 ```
 
-## Arquivo: internal/config/config.go
+### File: internal/autospec/plugin.go
 
 ```go
-package config
+package autospec
 
-type Config struct {
-	Name        string
-	Version     string
-	Title       string
-	Description string
-	ServerURL   string
-	DocsPath    string
-}
+import "reflect"
 
-func Default() Config {
-	return Config{
-		Name:        "autospec",
-		Version:     "dev",
-		Title:       "autospec",
-		Description: "Automatic OpenAPI generation for Go",
-		ServerURL:   "http://localhost:8080",
-		DocsPath:    "/docs",
-	}
+type Plugin interface {
+	Name() string
+	OnRoute(route RouteMeta)
+	OnSample(sample RequestSample)
+	SchemaFromType(t reflect.Type) (map[string]any, error)
 }
 ```
 
-## Arquivo: internal/openapi/spec.go
+### File: internal/autospec/autospec.go
 
 ```go
-package openapi
-
-type Spec struct {
-	OpenAPI    string              `json:"openapi"`
-	Info       Info                `json:"info"`
-	Servers    []Server            `json:"servers,omitempty"`
-	Paths      map[string]PathItem  `json:"paths"`
-	Components Components          `json:"components,omitempty"`
-}
-
-type Info struct {
-	Title       string `json:"title"`
-	Version     string `json:"version"`
-	Description string `json:"description,omitempty"`
-}
-
-type Server struct {
-	URL         string `json:"url"`
-	Description string `json:"description,omitempty"`
-}
-
-type Components struct {
-	Schemas         map[string]Schema         `json:"schemas,omitempty"`
-	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
-}
-
-type SecurityScheme struct {
-	Type         string `json:"type"`
-	Scheme       string `json:"scheme,omitempty"`
-	BearerFormat string `json:"bearerFormat,omitempty"`
-	Description  string `json:"description,omitempty"`
-}
-
-type Schema struct {
-	Type        string            `json:"type,omitempty"`
-	Format      string            `json:"format,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Properties  map[string]Schema `json:"properties,omitempty"`
-	Items       *Schema           `json:"items,omitempty"`
-	Required    []string          `json:"required,omitempty"`
-	Example     any               `json:"example,omitempty"`
-	Ref         string            `json:"$ref,omitempty"`
-}
-
-type PathItem struct {
-	Get     *Operation `json:"get,omitempty"`
-	Post    *Operation `json:"post,omitempty"`
-	Put     *Operation `json:"put,omitempty"`
-	Patch   *Operation `json:"patch,omitempty"`
-	Delete  *Operation `json:"delete,omitempty"`
-	Options *Operation `json:"options,omitempty"`
-	Head    *Operation `json:"head,omitempty"`
-	Trace   *Operation `json:"trace,omitempty"`
-}
-
-type Operation struct {
-	Summary     string                `json:"summary,omitempty"`
-	Description string                `json:"description,omitempty"`
-	Tags        []string              `json:"tags,omitempty"`
-	Security    []map[string][]string `json:"security,omitempty"`
-	Parameters  []Parameter           `json:"parameters,omitempty"`
-	RequestBody *RequestBody          `json:"requestBody,omitempty"`
-	Responses   map[string]Response   `json:"responses,omitempty"`
-}
-
-type Parameter struct {
-	Name        string `json:"name"`
-	In          string `json:"in"`
-	Required    bool   `json:"required,omitempty"`
-	Description string `json:"description,omitempty"`
-	Schema      Schema `json:"schema"`
-}
-
-type RequestBody struct {
-	Required bool                 `json:"required,omitempty"`
-	Content  map[string]MediaType `json:"content"`
-}
-
-type Response struct {
-	Description string                `json:"description"`
-	Content     map[string]MediaType  `json:"content,omitempty"`
-}
-
-type MediaType struct {
-	Schema Schema `json:"schema"`
-}
-```
-
-## Arquivo: internal/openapi/generator.go
-
-```go
-package openapi
-
-func NewSpec(title string, version string, description string) *Spec {
-	return &Spec{
-		OpenAPI: "3.1.0",
-		Info: Info{
-			Title:       title,
-			Version:     version,
-			Description: description,
-		},
-		Paths: make(map[string]PathItem),
-		Components: Components{
-			Schemas:         make(map[string]Schema),
-			SecuritySchemes: make(map[string]SecurityScheme),
-		},
-	}
-}
-
-func (s *Spec) AddServer(url string, description string) {
-	s.Servers = append(s.Servers, Server{
-		URL:         url,
-		Description: description,
-	})
-}
-
-func (s *Spec) AddSchema(name string, schema Schema) {
-	if s.Components.Schemas == nil {
-		s.Components.Schemas = make(map[string]Schema)
-	}
-
-	s.Components.Schemas[name] = schema
-}
-
-func (s *Spec) AddSecurityScheme(name string, scheme SecurityScheme) {
-	if s.Components.SecuritySchemes == nil {
-		s.Components.SecuritySchemes = make(map[string]SecurityScheme)
-	}
-
-	s.Components.SecuritySchemes[name] = scheme
-}
-
-func (s *Spec) AddOperation(path string, method string, operation Operation) {
-	item := s.Paths[path]
-
-	switch method {
-	case "GET":
-		item.Get = &operation
-	case "POST":
-		item.Post = &operation
-	case "PUT":
-		item.Put = &operation
-	case "PATCH":
-		item.Patch = &operation
-	case "DELETE":
-		item.Delete = &operation
-	case "OPTIONS":
-		item.Options = &operation
-	case "HEAD":
-		item.Head = &operation
-	case "TRACE":
-		item.Trace = &operation
-	}
-
-	s.Paths[path] = item
-}
-
-func (s *Spec) AddJSONResponse(path string, method string, status string, description string, schema Schema) {
-	item := s.Paths[path]
-	operation := operationForMethod(&item, method)
-	if operation == nil {
-		operation = &Operation{Responses: make(map[string]Response)}
-	}
-
-	if operation.Responses == nil {
-		operation.Responses = make(map[string]Response)
-	}
-
-	operation.Responses[status] = Response{
-		Description: description,
-		Content: map[string]MediaType{
-			"application/json": {
-				Schema: schema,
-			},
-		},
-	}
-
-	switch method {
-	case "GET":
-		item.Get = operation
-	case "POST":
-		item.Post = operation
-	case "PUT":
-		item.Put = operation
-	case "PATCH":
-		item.Patch = operation
-	case "DELETE":
-		item.Delete = operation
-	case "OPTIONS":
-		item.Options = operation
-	case "HEAD":
-		item.Head = operation
-	case "TRACE":
-		item.Trace = operation
-	}
-
-	s.Paths[path] = item
-}
-
-func operationForMethod(item *PathItem, method string) *Operation {
-	switch method {
-	case "GET":
-		return item.Get
-	case "POST":
-		return item.Post
-	case "PUT":
-		return item.Put
-	case "PATCH":
-		return item.Patch
-	case "DELETE":
-		return item.Delete
-	case "OPTIONS":
-		return item.Options
-	case "HEAD":
-		return item.Head
-	case "TRACE":
-		return item.Trace
-	default:
-		return nil
-	}
-}
-```
-
-## Arquivo: internal/openapi/json.go
-
-```go
-package openapi
-
-import "encoding/json"
-
-func (s *Spec) JSON() ([]byte, error) {
-	return json.MarshalIndent(s, "", "  ")
-}
-
-func (s *Spec) YAMLPlaceholder() string {
-	return "YAML generation will be added in a later step"
-}
-```
-
-## Arquivo: internal/runtime/inspect.go
-
-```go
-package runtime
-
-type Route struct {
-	Method      string
-	Path        string
-	Handler     string
-	Middlewares []string
-}
-
-type Snapshot struct {
-	Routes []Route
-	Auth   bool
-}
-
-func Inspect() Snapshot {
-	return Snapshot{
-		Routes: make([]Route, 0),
-	}
-}
-
-func DetectAuth(middlewares []string) bool {
-	for _, middleware := range middlewares {
-		if middleware == "AuthMiddleware" || middleware == "JWTMiddleware" {
-			return true
-		}
-	}
-
-	return false
-}
-```
-
-## Arquivo: internal/adapters/gin/adapter.go
-
-```go
-package ginadapter
+package autospec
 
 import (
-	"github.com/gin-gonic/gin"
+	"errors"
 
+	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
-	"github.com/Jeielsantosdev/autospec/internal/runtime"
 )
 
-type Adapter struct {
-	Engine *gin.Engine
-	Spec   *openapi.Spec
+type Autospec struct {
+	Spec            *openapi.Spec
+	plugins         []Plugin
+	preferredAdapter string
 }
 
-func New(engine *gin.Engine, spec *openapi.Spec) *Adapter {
-	return &Adapter{
-		Engine: engine,
-		Spec:   spec,
+func New(opts ...Option) *Autospec {
+	a := &Autospec{}
+	for _, o := range opts { o(a) }
+	if a.Spec == nil {
+		a.Spec = openapi.NewSpec("autospec", "dev", "autospec generated spec")
+		a.Spec.AddServer("http://localhost:8080", "local")
+	}
+	return a
+}
+
+// AttachTo tenta detectar o framework e anexar automaticamente
+func (a *Autospec) AttachTo(app any) error {
+	// Gin
+	if ginadapter.Detect(app) {
+		return ginadapter.Attach(app, a.Spec)
+	}
+
+	return errors.New("no adapter found for given app instance")
+}
+
+// Handle: opção declarativa para registrar rota + metadados
+func (a *Autospec) Handle(app any, method, path string, handler any, meta Meta) error {
+	// Para simplicidade, delegamos a adapters quando necessário.
+	if ginadapter.Detect(app) {
+		return ginadapter.RegisterRouteWithMeta(app, method, path, handler, a.Spec, meta)
+	}
+	return errors.New("handle: unsupported adapter")
+}
+
+// Run minimal CLI surface
+func (a *Autospec) Run(args []string) error {
+	if len(args) == 0 {
+		println("autospec dev")
+		return nil
+	}
+	switch args[0] {
+	case "version", "-v", "--version":
+		println(a.Spec.Info.Version)
+		return nil
+	default:
+		return errors.New("unknown command: " + args[0])
 	}
 }
 
-func (a *Adapter) Attach() {
-	if a.Engine == nil || a.Spec == nil {
-		return
-	}
+// Meta (declarative) e tipos de amostra
+type Meta struct {
+	Input any
+	Output any
+}
 
-	snapshot := runtime.Inspect()
-	for _, route := range snapshot.Routes {
-		a.Spec.AddOperation(route.Path, route.Method, openapi.Operation{
-			Summary: route.Handler,
-			Tags:    route.Middlewares,
-		})
-	}
+type RouteMeta struct {
+	Method string
+	Path   string
+}
+
+type RequestSample struct {
+	Method       string
+	Path         string
+	RequestBody  []byte
+	ResponseBody []byte
+	Status       int
+}
+
+// Helpers para uso em handlers (pequeno wrapper)
+func BindJSON(ctx any, dest any) error { // implementado por adapters via type switch
+	// placeholder: adapters podem prover BindJSON mais preciso
+	return nil
+}
+
+func RespondJSON(ctx any, status int, body any) error {
+	return nil
 }
 ```
 
-## Arquivo: internal/adapters/gin/routes.go
+### File: internal/adapters/gin/attach.go
 
 ```go
 package ginadapter
@@ -422,203 +420,1158 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
 	"github.com/Jeielsantosdev/autospec/internal/generators"
-	"github.com/Jeielsantosdev/autospec/internal/runtime"
 )
 
-func RegisterDocsRoutes(engine *gin.Engine, spec *openapi.Spec) {
-	engine.GET("/openapi.json", func(ctx *gin.Context) {
+// Detect tenta identificar se `app` é um *gin.Engine
+func Detect(app any) bool {
+	_, ok := app.(*gin.Engine)
+	return ok
+}
+
+// Attach registra rotas de docs e instala middleware de captura
+func Attach(app any, spec *openapi.Spec) error {
+	engine, ok := app.(*gin.Engine)
+	if !ok {
+		return nil
+	}
+
+	// registrar docs
+	engine.GET("/openapi.json", func(c *gin.Context) {
 		payload, err := spec.JSON()
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-
-		ctx.Data(http.StatusOK, "application/json", payload)
+		c.Data(http.StatusOK, "application/json", payload)
+	})
+	engine.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(generators.SwaggerUIPage("/openapi.json")))
 	})
 
-	engine.GET("/docs", func(ctx *gin.Context) {
-		ctx.Data(http.StatusOK, "text/html; charset=utf-8", []byte(generators.SwaggerUIPage("/openapi.json")))
-	})
+	// instalar middleware de captura (coleta amostras para inferência)
+	engine.Use(CaptureMiddleware(spec))
+
+	return nil
 }
 
-func RegisterRuntimeSnapshot(engine *gin.Engine, spec *openapi.Spec) {
-	snapshot := runtime.Inspect()
-	for _, route := range snapshot.Routes {
-		spec.AddOperation(route.Path, route.Method, openapi.Operation{
-			Summary:     route.Handler,
-			Description: "Route discovered at runtime",
-			Tags:        route.Middlewares,
-		})
+// RegisterRouteWithMeta permite registro declarativo
+func RegisterRouteWithMeta(app any, method, path string, handler any, spec *openapi.Spec, meta any) error {
+	engine := app.(*gin.Engine)
+	// aqui só exemplo: registrar o handler na rota
+	switch method {
+	case "GET":
+		engine.GET(path, handler.(gin.HandlerFunc))
+	case "POST":
+		engine.POST(path, handler.(gin.HandlerFunc))
+	default:
+		engine.Handle(method, path, handler.(gin.HandlerFunc))
 	}
-
-	_ = engine
-}
-```
-
-## Arquivo: internal/generators/swaggerui.go
-
-```go
-package generators
-
-import "fmt"
-
-func SwaggerUIPage(specURL string) string {
-	return fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>autospec docs</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
-</head>
-<body>
-  <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-  <script>
-    window.onload = () => {
-      window.ui = SwaggerUIBundle({
-        url: %q,
-        dom_id: '#swagger-ui',
-      })
-    }
-  </script>
-</body>
-</html>`, specURL)
-}
-```
-
-## Arquivo: internal/commands/dev.go
-
-```go
-package commands
-
-import "fmt"
-
-func Dev() error {
-	fmt.Println("autospec dev ainda nao implementado")
+	// registrar placeholder em spec
+	spec.AddOperation(path, method, openapi.Operation{Summary: "(declared)", Responses: map[string]openapi.Response{"200": {Description: "OK"}}})
 	return nil
 }
 ```
 
-## Arquivo: internal/commands/watch.go
+### File: internal/adapters/gin/capture_middleware.go
 
 ```go
-package commands
-
-import "fmt"
-
-func Watch() error {
-	fmt.Println("autospec watch ainda nao implementado")
-	return nil
-}
-```
-
-## Arquivo: internal/autospec/app.go
-
-```go
-package autospec
+package ginadapter
 
 import (
-	"errors"
-	"fmt"
+	"bytes"
+	"io"
+	"net/http"
 
-	"github.com/Jeielsantosdev/autospec/internal/commands"
-	"github.com/Jeielsantosdev/autospec/internal/config"
+	"github.com/gin-gonic/gin"
 	"github.com/Jeielsantosdev/autospec/internal/openapi"
-	"github.com/Jeielsantosdev/autospec/internal/version"
 )
 
-type App struct {
-	config config.Config
+type bodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
 }
 
-func New() *App {
-	return &App{
-		config: config.Default(),
-	}
+func (w bodyWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
 }
 
-func (a *App) Spec() *openapi.Spec {
-	spec := openapi.NewSpec(a.config.Title, a.config.Version, a.config.Description)
-	spec.AddServer(a.config.ServerURL, "Local development server")
-	spec.AddSecurityScheme("bearerAuth", openapi.SecurityScheme{
-		Type:         "http",
-		Scheme:       "bearer",
-		BearerFormat: "JWT",
-		Description:  "Bearer token authentication",
-	})
-	return spec
-}
+// CaptureMiddleware captura request e response e adiciona exemplo simples à spec
+func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// capturar request
+		var reqBuf []byte
+		if c.Request.Body != nil {
+			b, _ := io.ReadAll(c.Request.Body)
+			reqBufVou atualizar este documento com código e instruções copiáveis: core, adapter Gin, middleware de captura, exemplos e estrutura.
 
-func (a *App) Run(args []string) error {
-	if len(args) == 0 {
-		fmt.Printf("%s %s\n", a.config.Name, version.String())
-		fmt.Println("Use: autospec [version|dev|watch]")
-		return nil
-	}
+------
 
-	switch args[0] {
-	case "dev":
-		return commands.Dev()
-	case "watch":
-		return commands.Watch()
-	case "version", "--version", "-v":
-		fmt.Println(version.String())
-		return nil
-	default:
-		return errors.New("comando desconhecido: " + args[0])
-	}
-}
-```
+# autospec — implementação pronta para copiar
 
-## Exemplo de uso no Gin
+Este arquivo contém uma proposta DX-first e implementações mínimas copiáveis para acelerar a integração do `autospec` em apps Go com Gin. Copie os blocos de código para os arquivos correspondentes.
+
+Objetivo: plug-and-play, não invasivo, zero-config por padrão, com opção declarativa para precisão.
+
+------
+
+## Estrutura de pastas recomendada
+
+- cmd/autospec/main.go
+- internal/autospec/           # core público (API simples: New, Attach)
+	- autospec.go
+	- options.go
+	- plugin.go
+- internal/adapters/gin/
+	- attach.go
+	- capture_middleware.go
+- internal/openapi/
+	- spec.go        (já presente — use o seu)
+	- generator.go
+- internal/inspector/
+	- inspector.go
+- internal/reflect/
+	- schema_builder.go
+- internal/generators/
+	- swaggerui.go   (já presente — use o seu)
+
+------
+
+## API pública — exemplos copy/paste
+
+Zero-config (apenas inclua e anexe):
 
 ```go
 package main
 
 import (
 	"github.com/gin-gonic/gin"
-
 	"github.com/Jeielsantosdev/autospec/internal/autospec"
-	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
 )
 
 func main() {
-	engine := gin.Default()
-	app := autospec.New()
-	spec := app.Spec()
+	r := gin.Default()
+	as := autospec.New() // cria spec e sistema de plugins internamente
+	as.AttachTo(r)       // autodetecta Gin e registra /docs + /openapi.json
 
-	ginadapter.RegisterDocsRoutes(engine, spec)
-	ginadapter.New(engine, spec).Attach()
+	r.GET("/hello", func(c *gin.Context){ c.JSON(200, gin.H{"msg":"ok"}) })
+	r.POST("/users", CreateUser)
 
-	engine.Run(":8080")
+	r.Run(":8080")
 }
 ```
 
-## O que esta entrega cobre
+Declarative (opcional — para precisão):
 
-- CLI base com `version`, `dev` e `watch`
-- configuração centralizada
-- estrutura OpenAPI 3.1
-- geração de JSON da spec
-- suporte inicial a security scheme Bearer JWT
-- integração inicial com Gin
-- página de Swagger UI pronta para servir
-- base para runtime inspection e expansão futura
+```go
+as.Handle(r, "POST", "/users", CreateUser, autospec.Meta{
+	Input:  autospec.TypeOf[CreateUserRequest](),
+	Output: autospec.TypeOf[User](),
+})
+```
 
-## Próximos arquivos que eu criaria depois desta etapa
+Helpers (opcionais, para permitir inferência precisa dentro do handler):
 
-- `internal/openapi/schema_builder.go`
-- `internal/openapi/reflection.go`
-- `internal/runtime/gin_snapshot.go`
-- `internal/adapters/fiber/adapter.go`
-- `internal/adapters/echo/adapter.go`
-- `internal/cli/root.go`
-- `internal/cli/dev.go`
+```go
+func CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	autospec.BindJSON(c, &req) // grava tipo/amostra
+	user := doCreate(req)
+	autospec.RespondJSON(c, 201, user) // grava amostra de resposta
+}
+```
 
-## Resumo
+------
 
-Esta é a entrega completa inicial que eu faria agora para o `autospec`: uma base copiável, organizada por arquivo, com o núcleo do SDK, documentação automática inicial e integração pronta com Gin.
+## Implementações copiáveis (arquivos essenciais)
+
+Coloque os arquivos a seguir exatamente nos caminhos indicados.
+
+### File: cmd/autospec/main.go
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
+
+func main() {
+	app := autospec.New()
+	if err := app.Run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+### File: internal/autospec/options.go
+
+```go
+package autospec
+
+type Option func(*Autospec)
+
+func WithPlugin(p Plugin) Option {
+	return func(a *Autospec) { a.plugins = append(a.plugins, p) }
+}
+
+func WithAdapterName(name string) Option {
+	return func(a *Autospec) { a.preferredAdapter = name }
+}
+```
+
+### File: internal/autospec/plugin.go
+
+```go
+package autospec
+
+import "reflect"
+
+type Plugin interface {
+	Name() string
+	OnRoute(route RouteMeta)
+	OnSample(sample RequestSample)
+	SchemaFromType(t reflect.Type) (map[string]any, error)
+}
+```
+
+### File: internal/autospec/autospec.go
+
+```go
+package autospec
+
+import (
+	"errors"
+
+	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type Autospec struct {
+	Spec            *openapi.Spec
+	plugins         []Plugin
+	preferredAdapter string
+}
+
+func New(opts ...Option) *Autospec {
+	a := &Autospec{}
+	for _, o := range opts { o(a) }
+	if a.Spec == nil {
+		a.Spec = openapi.NewSpec("autospec", "dev", "autospec generated spec")
+		a.Spec.AddServer("http://localhost:8080", "local")
+	}
+	return a
+}
+
+// AttachTo tenta detectar o framework e anexar automaticamente
+func (a *Autospec) AttachTo(app any) error {
+	// Gin
+	if ginadapter.Detect(app) {
+		return ginadapter.Attach(app, a.Spec)
+	}
+
+	return errors.New("no adapter found for given app instance")
+}
+
+// Handle: opção declarativa para registrar rota + metadados
+func (a *Autospec) Handle(app any, method, path string, handler any, meta Meta) error {
+	// Para simplicidade, delegamos a adapters quando necessário.
+	if ginadapter.Detect(app) {
+		return ginadapter.RegisterRouteWithMeta(app, method, path, handler, a.Spec, meta)
+	}
+	return errors.New("handle: unsupported adapter")
+}
+
+// Run minimal CLI surface
+func (a *Autospec) Run(args []string) error {
+	if len(args) == 0 {
+		println("autospec dev")
+		return nil
+	}
+	switch args[0] {
+	case "version", "-v", "--version":
+		println(a.Spec.Info.Version)
+		return nil
+	default:
+		return errors.New("unknown command: " + args[0])
+	}
+}
+
+// Meta (declarative) e tipos de amostra
+type Meta struct {
+	Input any
+	Output any
+}
+
+type RouteMeta struct {
+	Method string
+	Path   string
+}
+
+type RequestSample struct {
+	Method       string
+	Path         string
+	RequestBody  []byte
+	ResponseBody []byte
+	Status       int
+}
+
+// Helpers para uso em handlers (pequeno wrapper)
+func BindJSON(ctx any, dest any) error { // implementado por adapters via type switch
+	// placeholder: adapters podem prover BindJSON mais preciso
+	return nil
+}
+
+func RespondJSON(ctx any, status int, body any) error {
+	return nil
+}
+```
+
+### File: internal/adapters/gin/attach.go
+
+```go
+package ginadapter
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+	"github.com/Jeielsantosdev/autospec/internal/generators"
+)
+
+// Detect tenta identificar se `app` é um *gin.Engine
+func Detect(app any) bool {
+	_, ok := app.(*gin.Engine)
+	return ok
+}
+
+// Attach registra rotas de docs e instala middleware de captura
+func Attach(app any, spec *openapi.Spec) error {
+	engine, ok := app.(*gin.Engine)
+	if !ok {
+		return nil
+	}
+
+	// registrar docs
+	engine.GET("/openapi.json", func(c *gin.Context) {
+		payload, err := spec.JSON()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Data(http.StatusOK, "application/json", payload)
+	})
+	engine.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(generators.SwaggerUIPage("/openapi.json")))
+	})
+
+	// instalar middleware de captura (coleta amostras para inferência)
+	engine.Use(CaptureMiddleware(spec))
+
+	return nil
+}
+
+// RegisterRouteWithMeta permite registro declarativo
+func RegisterRouteWithMeta(app any, method, path string, handler any, spec *openapi.Spec, meta any) error {
+	engine := app.(*gin.Engine)
+	// aqui só exemplo: registrar o handler na rota
+	switch method {
+	case "GET":
+		engine.GET(path, handler.(gin.HandlerFunc))
+	case "POST":
+		engine.POST(path, handler.(gin.HandlerFunc))
+	default:
+		engine.Handle(method, path, handler.(gin.HandlerFunc))
+	}
+	// registrar placeholder em spec
+	spec.AddOperation(path, method, openapi.Operation{Summary: "(declared)", Responses: map[string]openapi.Response{"200": {Description: "OK"}}})
+	return nil
+}
+```
+
+### File: internal/adapters/gin/capture_middleware.go
+
+```go
+package ginadapter
+
+import (
+	"bytes"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type bodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+// CaptureMiddleware captura request e response e adiciona exemplo simples à spec
+func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// capturar request
+		var reqBuf []byte
+		if c.Request.Body != nil {
+			b, _ := io.ReadAll(c.Request.Body)
+			reqBuf = b
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(b))
+		}
+
+		// capturar response
+		bw := &bodyWriter{ResponseWriter: c.Writer, body: bytes.NewBuffer(nil)}
+		c.Writer = bw
+
+		c.Next()
+
+		status := c.Writer.Status()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		// anexar exemplo simples na spec: usamos example sem schema real
+		// para uma evolução futura, integrar reflect/schema_builder
+		if path != "" {
+			example := map[string]any{"request": string(reqBuf), "response": bw.body.String()}
+			schema := openapi.Schema{Type: "object", Example: example}
+			spec.AddJSONResponse(path, method, http.StatusText(status), "captured example", schema)
+		}
+	}
+}
+```
+
+### File: internal/reflect/schema_builder.go (esqueleto)
+
+```go
+package reflect
+
+// Implementação futura: reflect.Type -> JSON Schema
+// Forneça utilitários para transformar structs em openapi.Schema
+```
+
+### File: internal/inspector/inspector.go (esqueleto)
+
+```go
+package inspector
+
+// Aqui ficará a lógica de amostragem, merge de exemplos e deduplicação.
+// Para a v0 inicial usamos a CaptureMiddleware que registra exemplos diretamente na spec.
+```
+
+------
+
+## Fluxo interno resumido
+
+- `autospec.New()` cria um `openapi.Spec` mínimo.
+- `as.AttachTo(app)` detecta framework via adapters e chama `Attach` do adapter.
+- Adapter registra `/openapi.json` e `/docs` e instala um `CaptureMiddleware` (coleta amostras sem alterar handlers).
+- Middleware captura request/response e insere exemplos em `spec`.
+- Opcional: `autospec.Handle(...)` registra rotas declarativamente e adiciona metadados precisos.
+
+------
+
+## Roadmap técnico curto
+
+- v0.1: Core + Gin adapter + capture middleware + Swagger UI.
+- v0.2: Schema builder reflect + sample merge + masking de campos sensíveis.
+- v0.3: Plugin system, AuthDetector plugin, middleware detector.
+- v0.4: Adapters: Echo, Fiber, Chi, net/http.
+
+------
+
+## Problemas técnicos e recomendações
+
+- Inferência apenas via amostras é heurística; oferecer combinador declarativo (Meta) para precisão.
+- Limitar tamanho das amostras por padrão; mascarar campos sensíveis.
+- Fornecer modo "offline" (análise estática com go/packages) para projetos que preferem zero-runtime-overhead.
+
+------
+
+Se quiser, implemento agora esses arquivos no repositório do workspace (criar/atualizar arquivos), e então executo um build Go rápido para validar. Quer que eu faça isso agora? = b
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(b))
+		}
+
+		// capturar response
+		bw := &bodyWriter{ResponseWriter: c.Writer, body: bytes.NewBuffer(nil)}
+		c.Writer = bw
+
+		c.Next()
+
+		status := c.Writer.Status()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		// anexar exemplo simples na spec: usamos example sem schema real
+		// para uma evolução futura, integrar reflect/schema_builder
+		if path != "" {
+			example := map[string]any{"request": string(reqBuf), "response": bw.body.String()}
+			schema := openapi.Schema{Type: "object", Example: example}
+			spec.AddJSONResponse(path, method, http.StatusText(status), "captured example", schema)
+		}
+	}
+}
+```
+
+### File: internal/reflect/schema_builder.go (esqueleto)
+
+```go
+package reflect
+
+// Implementação futura: reflect.Type -> JSON Schema
+// Forneça utilitários para transformar structs em openapi.Schema
+```
+
+### File: internal/inspector/inspector.go (esqueleto)
+
+```go
+package inspector
+
+// Aqui ficará a lógica de amostragem, merge de exemplos e deduplicação.
+// Para a v0 inicial usamos a CaptureMiddleware que registra exemplos diretamente na spec.
+```
+
+------
+
+## Fluxo interno resumido
+
+- `autospec.New()` cria um `openapi.Spec` mínimo.
+- `as.AttachTo(app)` detecta framework via adapters e chama `Attach` do adapter.
+- Adapter registra `/openapi.json` e `/docs` e instala um `CaptureMiddleware` (coleta amostras sem alterar handlers).
+- Middleware captura request/response e insere exemplos em `spec`.
+- Opcional: `autospec.Handle(...)` registra rotas declarativamente e adiciona metadados precisos.
+
+------
+
+## Roadmap técnico curto
+
+- v0.1: Core + Gin adapter + capture middleware + Swagger UI.
+- v0.2: Schema builder reflect + sample merge + masking de campos sensíveis.
+- v0.3: Plugin system, AuthDetector plugin, middleware detector.
+- v0.4: Adapters: Echo, Fiber, Chi, net/http.
+
+------
+
+## Problemas técnicos e recomendações
+
+- Inferência apenas via amostras é heurística; oferecer combinador declarativo (Meta) para precisão.
+- Limitar tamanho das amostras por padrão; mascarar campos sensíveis.
+- Fornecer modo "offline" (análise estática com go/packages) para projetos que preferem zero-runtime-overhead.
+
+------
+
+Se quiser, implemento agora esses arquivos no repositório do workspace (criar/atualizar arquivos), e então executo um build Go rápido para validar. Quer que eu faça isso agora?un(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+### File: internal/autospec/options.go
+
+```go
+package autospec
+
+type Option func(*Autospec)
+
+func WithPlugin(p Plugin) Option {
+	return func(a *Autospec) { a.plugins = append(a.plugins, p) }
+}
+
+func WithAdapterName(name string) Option {
+	return func(a *Autospec) { a.preferredAdapter = name }
+}
+```
+
+### File: internal/autospec/plugin.go
+
+```go
+package autospec
+
+import "reflect"
+
+type Plugin interface {
+	Name() string
+	OnRoute(route RouteMeta)
+	OnSample(sample RequestSample)
+	SchemaFromType(t reflect.Type) (map[string]any, error)
+}
+```
+
+### File: internal/autospec/autospec.go
+
+```go
+package autospec
+
+import (
+	"errors"
+
+	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type Autospec struct {
+	Spec            *openapi.Spec
+	plugins         []Plugin
+	preferredAdapter string
+}
+
+func New(opts ...Option) *Autospec {
+	a := &Autospec{}
+	for _, o := range opts { o(a) }
+	if a.Spec == nil {
+		a.Spec = openapi.NewSpec("autospec", "dev", "autospec generated spec")
+		a.Spec.AddServer("http://localhost:8080", "local")
+	}
+	return a
+}
+
+// AttachTo tenta detectar o framework e anexar automaticamente
+func (a *Autospec) AttachTo(app any) error {
+	// Gin
+	if ginadapter.Detect(app) {
+		return ginadapter.Attach(app, a.Spec)
+	}
+
+	return errors.New("no adapter found for given app instance")
+}
+
+// Handle: opção declarativa para registrar rota + metadados
+func (a *Autospec) Handle(app any, method, path string, handler any, meta Meta) error {
+	// Para simplicidade, delegamos a adapters quando necessário.
+	if ginadapter.Detect(app) {
+		return ginadapter.RegisterRouteWithMeta(app, method, path, handler, a.Spec, meta)
+	}
+	return errors.New("handle: unsupported adapter")
+}
+
+// Run minimal CLI surface
+func (a *Autospec) Run(args []string) error {
+	if len(args) == 0 {
+		println("autospec dev")
+		return nil
+	}
+	switch args[0] {
+	case "version", "-v", "--version":
+		println(a.Spec.Info.Version)
+		return nil
+	default:
+		return errors.New("unknown command: " + args[0])
+	}
+}
+
+// Meta (declarative) e tipos de amostra
+type Meta struct {
+	Input any
+	Output any
+}
+
+type RouteMeta struct {
+	Method string
+	Path   string
+}
+
+type RequestSample struct {
+	Method       string
+	Path         string
+	RequestBody  []byte
+	ResponseBody []byte
+	Status       int
+}
+
+// Helpers para uso em handlers (pequeno wrapper)
+func BindJSON(ctx any, dest any) error { // implementado por adapters via type switch
+	// placeholder: adapters podem prover BindJSON mais preciso
+	return nil
+}
+
+func RespondJSON(ctx any, status int, body any) error {
+	return nil
+}
+```
+
+### File: internal/adapters/gin/attach.go
+
+```go
+package ginadapter
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+	"github.com/Jeielsantosdev/autospec/internal/generators"
+)
+
+// Detect tenta identificar se `app` é um *gin.Engine
+func Detect(app any) bool {
+	_, ok := app.(*gin.Engine)
+	return ok
+}
+
+// Attach registra rotas de docs e instala middleware de captura
+func Attach(app any, spec *openapi.Spec) error {
+	engine, ok := app.(*gin.Engine)
+	if !ok {
+		return nil
+	}
+
+	// registrar docs
+	engine.GET("/openapi.json", func(c *gin.Context) {
+		payload, err := spec.JSON()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Data(http.StatusOK, "application/json", payload)
+	})
+	engine.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(generators.SwaggerUIPage("/openapi.json")))
+	})
+
+	// instalar middleware de captura (coleta amostras para inferência)
+	engine.Use(CaptureMiddleware(spec))
+
+	return nil
+}
+
+// RegisterRouteWithMeta permite registro declarativo
+func RegisterRouteWithMeta(app any, method, path string, handler any, spec *openapi.Spec, meta any) error {
+	engine := app.(*gin.Engine)
+	// aqui só exemplo: registrar o handler na rota
+	switch method {
+	case "GET":
+		engine.GET(path, handler.(gin.HandlerFunc))
+	case "POST":
+		engine.POST(path, handler.(gin.HandlerFunc))
+	default:
+		engine.Handle(method, path, handler.(gin.HandlerFunc))
+	}
+	// registrar placeholder em spec
+	spec.AddOperation(path, method, openapi.Operation{Summary: "(declared)", Responses: map[string]openapi.Response{"200": {Description: "OK"}}})
+	return nil
+}
+```
+
+### File: internal/adapters/gin/capture_middleware.go
+
+```go
+package ginadapter
+
+import (
+	"bytes"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type bodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+// CaptureMiddleware captura request e response e adiciona exemplo simples à spec
+func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// capturar request
+		var reqBuf []byte
+		if c.Request.Body != nil {
+			b, _ := io.ReadAll(c.Request.Body)
+			reqBuf = b
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(b))
+		}
+
+		// capturar response
+		bw := &bodyWriter{ResponseWriter: c.Writer, body: bytes.NewBuffer(nil)}
+		c.Writer = bw
+
+		c.Next()
+
+		status := c.Writer.Status()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		// anexar exemplo simples na spec: usamos example sem schema real
+		// para uma evolução futura, integrar reflect/schema_builder
+		if path != "" {
+			example := map[string]any{"request": string(reqBuf), "response": bw.body.String()}
+			schema := openapi.Schema{Type: "object", Example: example}
+			spec.AddJSONResponse(path, method, http.StatusText(status), "captured example", schema)
+		}
+	}
+}
+```
+
+### File: internal/reflect/schema_builder.go (esqueleto)
+
+```go
+package reflect
+
+// Implementação futura: reflect.Type -> JSON Schema
+// Forneça utilitários para transformar structs em openapi.Schema
+```
+
+### File: internal/inspector/inspector.go (esqueleto)
+
+```go
+package inspector
+
+// Aqui ficará a lógica de amostragem, merge de exemplos e deduplicação.
+// Para a v0 inicial usamos a CaptureMiddleware que registra exemplos diretamente na spec.
+```
+
+------
+
+## Fluxo interno resumido
+
+- `autospec.New()` cria um `openapi.Spec` mínimo.
+- `as.AttachTo(app)` detecta framework via adapters e chama `Attach` do adapter.
+- Adapter registra `/openapi.json` e `/docs` e instala um `CaptureMiddleware` (coleta amostras sem alterar handlers).
+- Middleware captura request/response e insere exemplos em `spec`.
+- Opcional: `autospec.Handle(...)` registra rotas declarativamente e adiciona metadados precisos.
+
+------
+
+## Roadmap técnico curto
+
+- v0.1: Core + Gin adapter + capture middleware + Swagger UI.
+- v0.2: Schema builder reflect + sample merge + masking de campos sensíveis.
+- v0.3: Plugin system, AuthDetector plugin, middleware detector.
+- v0.4: Adapters: Echo, Fiber, Chi, net/http.
+
+------
+
+## Problemas técnicos e recomendações
+
+- Inferência apenas via amostras é heurística; oferecer combinador declarativo (Meta) para precisão.
+- Limitar tamanho das amostras por padrão; mascarar campos sensíveis.
+- Fornecer modo "offline" (análise estática com go/packages) para projetos que preferem zero-runtime-overhead.
+
+------
+
+Se quiser, implemento agora esses arquivos no repositório do workspace (criar/atualizar arquivos), e então executo um build Go rápido para validar. Quer que eu faça isso agora?
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
+)
+
+func main() {
+	app := autospec.New()
+	if err := app.Run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+### File: internal/autospec/options.go
+
+```go
+package autospec
+
+type Option func(*Autospec)
+
+func WithPlugin(p Plugin) Option {
+	return func(a *Autospec) { a.plugins = append(a.plugins, p) }
+}
+
+func WithAdapterName(name string) Option {
+	return func(a *Autospec) { a.preferredAdapter = name }
+}
+```
+
+### File: internal/autospec/plugin.go
+
+```go
+package autospec
+
+import "reflect"
+
+type Plugin interface {
+	Name() string
+	OnRoute(route RouteMeta)
+	OnSample(sample RequestSample)
+	SchemaFromType(t reflect.Type) (map[string]any, error)
+}
+```
+
+### File: internal/autospec/autospec.go
+
+```go
+package autospec
+
+import (
+	"errors"
+
+	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type Autospec struct {
+	Spec            *openapi.Spec
+	plugins         []Plugin
+	preferredAdapter string
+}
+
+func New(opts ...Option) *Autospec {
+	a := &Autospec{}
+	for _, o := range opts { o(a) }
+	if a.Spec == nil {
+		a.Spec = openapi.NewSpec("autospec", "dev", "autospec generated spec")
+		a.Spec.AddServer("http://localhost:8080", "local")
+	}
+	return a
+}
+
+// AttachTo tenta detectar o framework e anexar automaticamente
+func (a *Autospec) AttachTo(app any) error {
+	// Gin
+	if ginadapter.Detect(app) {
+		return ginadapter.Attach(app, a.Spec)
+	}
+
+	return errors.New("no adapter found for given app instance")
+}
+
+// Handle: opção declarativa para registrar rota + metadados
+func (a *Autospec) Handle(app any, method, path string, handler any, meta Meta) error {
+	// Para simplicidade, delegamos a adapters quando necessário.
+	if ginadapter.Detect(app) {
+		return ginadapter.RegisterRouteWithMeta(app, method, path, handler, a.Spec, meta)
+	}
+	return errors.New("handle: unsupported adapter")
+}
+
+// Run minimal CLI surface
+func (a *Autospec) Run(args []string) error {
+	if len(args) == 0 {
+		println("autospec dev")
+		return nil
+	}
+	switch args[0] {
+	case "version", "-v", "--version":
+		println(a.Spec.Info.Version)
+		return nil
+	default:
+		return errors.New("unknown command: " + args[0])
+	}
+}
+
+// Meta (declarative) e tipos de amostra
+type Meta struct {
+	Input any
+	Output any
+}
+
+type RouteMeta struct {
+	Method string
+	Path   string
+}
+
+type RequestSample struct {
+	Method       string
+	Path         string
+	RequestBody  []byte
+	ResponseBody []byte
+	Status       int
+}
+
+// Helpers para uso em handlers (pequeno wrapper)
+func BindJSON(ctx any, dest any) error { // implementado por adapters via type switch
+	// placeholder: adapters podem prover BindJSON mais preciso
+	return nil
+}
+
+func RespondJSON(ctx any, status int, body any) error {
+	return nil
+}
+```
+
+### File: internal/adapters/gin/attach.go
+
+```go
+package ginadapter
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+	"github.com/Jeielsantosdev/autospec/internal/generators"
+)
+
+// Detect tenta identificar se `app` é um *gin.Engine
+func Detect(app any) bool {
+	_, ok := app.(*gin.Engine)
+	return ok
+}
+
+// Attach registra rotas de docs e instala middleware de captura
+func Attach(app any, spec *openapi.Spec) error {
+	engine, ok := app.(*gin.Engine)
+	if !ok {
+		return nil
+	}
+
+	// registrar docs
+	engine.GET("/openapi.json", func(c *gin.Context) {
+		payload, err := spec.JSON()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Data(http.StatusOK, "application/json", payload)
+	})
+	engine.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(generators.SwaggerUIPage("/openapi.json")))
+	})
+
+	// instalar middleware de captura (coleta amostras para inferência)
+	engine.Use(CaptureMiddleware(spec))
+
+	return nil
+}
+
+// RegisterRouteWithMeta permite registro declarativo
+func RegisterRouteWithMeta(app any, method, path string, handler any, spec *openapi.Spec, meta any) error {
+	engine := app.(*gin.Engine)
+	// aqui só exemplo: registrar o handler na rota
+	switch method {
+	case "GET":
+		engine.GET(path, handler.(gin.HandlerFunc))
+	case "POST":
+		engine.POST(path, handler.(gin.HandlerFunc))
+	default:
+		engine.Handle(method, path, handler.(gin.HandlerFunc))
+	}
+	// registrar placeholder em spec
+	spec.AddOperation(path, method, openapi.Operation{Summary: "(declared)", Responses: map[string]openapi.Response{"200": {Description: "OK"}}})
+	return nil
+}
+```
+
+### File: internal/adapters/gin/capture_middleware.go
+
+```go
+package ginadapter
+
+import (
+	"bytes"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+)
+
+type bodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+// CaptureMiddleware captura request e response e adiciona exemplo simples à spec
+func CaptureMiddleware(spec *openapi.Spec) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// capturar request
+		var reqBuf []byte
+		if c.Request.Body != nil {
+			b, _ := io.ReadAll(c.Request.Body)
+			reqBuf = b
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(b))
+		}
+
+		// capturar response
+		bw := &bodyWriter{ResponseWriter: c.Writer, body: bytes.NewBuffer(nil)}
+		c.Writer = bw
+
+		c.Next()
+
+		status := c.Writer.Status()
+		path := c.FullPath()
+		method := c.Request.Method
+
+		// anexar exemplo simples na spec: usamos example sem schema real
+		// para uma evolução futura, integrar reflect/schema_builder
+		if path != "" {
+			example := map[string]any{"request": string(reqBuf), "response": bw.body.String()}
+			schema := openapi.Schema{Type: "object", Example: example}
+			spec.AddJSONResponse(path, method, http.StatusText(status), "captured example", schema)
+		}
+	}
+}
+```
+
+### File: internal/reflect/schema_builder.go (esqueleto)
+
+```go
+package reflect
+
+// Implementação futura: reflect.Type -> JSON Schema
+// Forneça utilitários para transformar structs em openapi.Schema
+```
+
+### File: internal/inspector/inspector.go (esqueleto)
+
+```go
+package inspector
+
+// Aqui ficará a lógica de amostragem, merge de exemplos e deduplicação.
+// Para a v0 inicial usamos a CaptureMiddleware que registra exemplos diretamente na spec.
+```
+
+------
+
+## Fluxo interno resumido
+
+- `autospec.New()` cria um `openapi.Spec` mínimo.
+- `as.AttachTo(app)` detecta framework via adapters e chama `Attach` do adapter.
+- Adapter registra `/openapi.json` e `/docs` e instala um `CaptureMiddleware` (coleta amostras sem alterar handlers).
+- Middleware captura request/response e insere exemplos em `spec`.
+- Opcional: `autospec.Handle(...)` registra rotas declarativamente e adiciona metadados precisos.
+
+------
+
+## Roadmap técnico curto
+
+- v0.1: Core + Gin adapter + capture middleware + Swagger UI.
+- v0.2: Schema builder reflect + sample merge + masking de campos sensíveis.
+- v0.3: Plugin system, AuthDetector plugin, middleware detector.
+- v0.4: Adapters: Echo, Fiber, Chi, net/http.
+
+------
+
+## Problemas técnicos e recomendações
+
+- Inferência apenas via amostras é heurística; oferecer combinador declarativo (Meta) para precisão.
+- Limitar tamanho das amostras por padrão; mascarar campos sensíveis.
+- Fornecer modo "offline" (análise estática com go/packages) para projetos que preferem zero-runtime-overhead.
+
+------
+
+Se quiser, implemento agora esses arquivos no repositório do workspace (criar/atualizar arquivos), e então executo um build Go rápido para validar. Quer que eu faça isso agora?
