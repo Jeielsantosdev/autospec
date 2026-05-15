@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Jeielsantosdev/autospec/autospec"
+	"github.com/Jeielsantosdev/autospec/internal/autospec"
 )
 
 func main() {
