@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Jeielsantosdev/autospec/internal/autospec"
+	"github.com/Jeielsantosdev/autospec/autospec"
 )
 
 func main() {
-	app := autospec.News()
+	app := autospec.New()
 
 	if err := app.Run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
