@@ -53,3 +53,53 @@ Se quiser, eu posso:
 - Adicionar instruções de configuração mais detalhadas;
 - Incluir exemplos de uso das APIs;
 - Publicar no Git remoto (`git push`).
+
+**Exemplo de Uso com Gin Gonic**
+
+Um exemplo mínimo que inicializa um `gin` server, registra rotas, gera a especificação OpenAPI em runtime usando o adaptador do projeto e expõe as rotas de documentação (`/openapi.json` e `/docs`):
+
+```go
+package main
+
+import (
+	"net/http"
+
+	ginadapter "github.com/Jeielsantosdev/autospec/internal/adapters/gin"
+	"github.com/Jeielsantosdev/autospec/internal/openapi"
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	engine := gin.Default()
+
+	// Cria a Spec OpenAPI
+	spec := openapi.NewSpec("Minha API", "v0.1.0", "Exemplo com Gin Gonic e autospec")
+	spec.AddServer("http://localhost:8080", "Servidor local")
+
+	// Registre suas rotas normalmente
+	engine.GET("/hello", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Olá, mundo"})
+	})
+
+	// Anexa o adaptador que varre as rotas em runtime e popula a Spec
+	ginadapter.New(engine, spec).Attach()
+
+	// Rotas para expor a documentação gerada
+	ginadapter.RegisterDocsRoutes(engine, spec)
+
+	// Inicia o servidor
+	engine.Run(":8080")
+}
+```
+
+Comandos úteis:
+
+```bash
+# Baixar dependências
+go mod download
+
+# Rodar o exemplo (a partir da raiz do repositório)
+go run ./cmd/autospec  # ou crie um main a partir do snippet e execute: go run ./path/to/main.go
+```
+
+Esse exemplo usa as funções internas do projeto (`internal/adapters/gin` e `internal/openapi`). Ajuste os imports/paths conforme necessário se for extrair a parte de geração para outro módulo.

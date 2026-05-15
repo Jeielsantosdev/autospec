@@ -18,7 +18,7 @@ type App struct {
 	config config.Config
 }
 
-func New() *App {
+func News() *App {
 	return &App{
 		config: config.Default(),
 	}
